@@ -1,0 +1,47 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # Бот погоды
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *default-logging
+
+  # PostgreSQL 16
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-bot_4_weather_uz}
+      POSTGRES_USER: ${DB_USER:-bot_4_weather_uz}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-bot_4_weather_uz} -d ${DB_NAME:-bot_4_weather_uz}"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+    logging: *default-logging
+
+  # Автоперезапуск unhealthy контейнеров
+  autoheal:
+    image: willfarrell/autoheal:latest
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    logging: *default-logging
+
+volumes:
+  postgres-data:
