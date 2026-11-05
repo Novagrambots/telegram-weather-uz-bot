@@ -1,6 +1,6 @@
 # Основные зависимости
 aiogram>=3.4.0
-SQLAlchemy>=2.0.0
+SQLAlchemy[asyncio]==2.0.38
 asyncpg>=0.29.0
 alembic>=1.13.0
 pydantic-settings>=2.0.0
